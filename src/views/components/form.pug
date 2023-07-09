@@ -1,0 +1,120 @@
+form#form
+  input(type="text" name="name" id="name" placeholder="Name")
+  div.error-message#name-error
+  input(type="email" name="email" id="email" placeholder="Email")
+  div.error-message#email-error
+  textarea(name="message" id="message" placeholder="Message")
+  div.wrapper-submitButton
+    button.btn.btn-black.hover-up.icon-arrow-right-white(type="submit") Send Message
+    p.policy
+      | By clicking the "Contact us" button, you agree to our terms and policy.
+
+div.overlay
+  div.modal_content
+    div.modal_text
+      | Thank you for the form submitting!
+
+script.
+  document.addEventListener("DOMContentLoaded", function () {
+    let form = document.getElementById("form");
+    let nameInput = document.getElementById("name");
+    let emailInput = document.getElementById("email");
+    let messageInput = document.getElementById("message");
+    let nameError = document.getElementById("name-error");
+    let emailError = document.getElementById("email-error");
+    let overlay = document.querySelector(".overlay");
+    let modalContent = document.querySelector(".modal_content");
+
+    form.addEventListener("submit", function (event) {
+      event.preventDefault();
+    
+      nameError.textContent = "";
+      emailError.textContent = "";
+
+      let isValid = true;
+
+      if (nameInput.value.trim() === "") {
+        nameError.textContent = "Please enter your name";
+        nameInput.classList.add("error");
+        isValid = false;
+      } else if (!validateName(nameInput.value.trim())) {
+        nameError.textContent =
+          "Name should not contain numbers or special characters";
+        nameInput.classList.add("error");
+        isValid = false;
+      }
+
+      if (emailInput.value.trim() === "") {
+        emailError.textContent = "Please enter your email";
+        emailInput.classList.add("error");
+        isValid = false;
+      } else if (!validateEmail(emailInput.value.trim())) {
+        nameError.textContent = "Email should contain @";
+        nameInput.classList.add("error");
+        isValid = false;
+      }
+
+      if (isValid) {
+        let formData = {
+          name: nameInput.value.trim(),
+          email: emailInput.value.trim(),
+          message: messageInput.value.trim(),
+        };
+        openSubmitModal();
+        fetch("https://api.byteplex.info/api/test/contact/", {
+          method: "POST",
+          body: JSON.stringify(formData),
+          headers: {
+            "Content-Type": "application/json",
+          },
+        })
+          .then(function (response) {
+            if (response.ok) {
+              return response.json();
+            } else {
+              throw new Error("Error in form submission");
+            }
+          })
+          .then(function (data) {
+            console.log("Form Data:", data);
+            form.reset();
+          })
+          .catch(function (error) {
+            form.reset();
+            console.error("Error:", error);
+          });
+      }
+    });
+
+    nameInput.addEventListener("input", function () {
+      nameError.textContent = "";
+      nameInput.classList.remove("error");
+    });
+
+    emailInput.addEventListener("input", function () {
+      emailError.textContent = "";
+      emailInput.classList.remove("error");
+    });
+
+    function validateName(name) {
+      let nameRegex = /^[a-zA-Zа-яА-ЯіІїЇєЄёЁ]+$/;
+      return nameRegex.test(name);
+    }
+
+    function validateEmail(email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      return emailRegex.test(email);
+    }
+
+    function openSubmitModal() {
+      overlay.style.display = "flex";
+    }
+
+    overlay.addEventListener("click", function () {
+      overlay.style.display = "none";
+    });
+
+    modalContent.addEventListener("click", function (e) {
+      e.stopPropagation();
+    });
+  });
